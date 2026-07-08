@@ -63,14 +63,14 @@
     <h1>幾何の作品集</h1>
     <div class="en">SIX STUDIES IN GEOMETRY</div>
     <div class="go">▶ クリックで開演（全画面）</div>
-    <div class="hint">→ 次へ ／ ← 戻る ／ Space 一時停止 ／ F 全画面 ／ C 時計 ／ Esc 終了</div>
+    <div class="hint">→ 次へ ／ ← 戻る ／ Space 一時停止 ／ F 全画面 ／ L ラベル表示 ／ C 時計 ／ Esc 終了</div>
   </div>
 
 <script>
   // ══════════ 設定（ここだけ変えればOK） ══════════
   const DWELL_SEC = 90;    // 1作品の表示秒数（90=1分半。6作品で9分→30分で約3周。飽きない巡回）
                            //   ※ゆっくりにしたいなら120〜150、速くしたいなら60あたりで調整
-  const SHOW_LABEL = true; // 左下の作品ラベル（CCF5・NN / 和名 / 英名）を出す。完全に何も出したくないなら false
+  let showLabel = true;    // 左下の作品ラベルの初期表示。当日は「L」キーでいつでもON/OFF切替できる
   const FADE_MS   = 2400;  // クロスフェード時間
   // 上映順（受付〜開演の弧：無から→無限→生命→共鳴→多次元→曼荼羅=満ちる）
   const ORDER = [
@@ -114,6 +114,7 @@
     incoming.onload=function(){
       incoming.onload=null;            // 一度きり（about:blankでの再発火を防ぐ＝真っ暗バグの原因）
       hideHUD(incoming,w.dir);
+      relayKeys(incoming);             // 作品をクリックしてもキー操作が効くよう、iframe内にも監視を差し込む
       incoming.classList.add('on');
       if(outgoing) outgoing.classList.remove('on');
       activeLayer=incoming;
@@ -122,13 +123,17 @@
       }
     };
     incoming.src=base(w.dir);
-    // wall label
-    if(SHOW_LABEL){
-      lno.textContent=w.no; ltt.textContent=w.ttl; len.textContent=w.en;
-      label.classList.add('show');
-      clearTimeout(labelTimer);
-      labelTimer=setTimeout(()=>label.classList.remove('show'), 7000);
-    }
+    curW=w;
+    showWallLabel();
+  }
+
+  let curW=null;
+  function showWallLabel(){
+    if(!showLabel || !curW){ label.classList.remove('show'); return; }
+    lno.textContent=curW.no; ltt.textContent=curW.ttl; len.textContent=curW.en;
+    label.classList.add('show');
+    clearTimeout(labelTimer);
+    labelTimer=setTimeout(()=>label.classList.remove('show'), 7000);
   }
 
   function schedule(){ clearTimeout(timer); if(!paused) timer=setTimeout(()=>{ next(); }, DWELL_SEC*1000); }
@@ -153,16 +158,29 @@
   // ── controls ──
   const pausedEl=document.getElementById('paused');
   function togglePause(){ paused=!paused; pausedEl.classList.toggle('show',paused); if(paused){clearTimeout(timer);} else {schedule();} }
-  document.addEventListener('keydown', e=>{
-    if(!started){ if(e.key==='Enter'||e.key===' ') begin(); return; }
+  function toggleFull(){ try{ (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch?.(()=>{}); }catch(e){} }
+  function toggleClock(){ clockOn=!clockOn; clockEl.classList.toggle('show',clockOn); }
+  function toggleLabel(){ showLabel=!showLabel; showWallLabel(); }
+
+  // 1つのキー処理を、親ドキュメントと各iframeの両方に付ける（作品クリック後もフォーカスに関わらず効く）
+  function onKey(e){
+    if(!started){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); begin(); } return; }
+    let handled=true;
     switch(e.key){
       case 'ArrowRight': next(); break;
       case 'ArrowLeft': prev(); break;
-      case ' ': e.preventDefault(); togglePause(); break;
-      case 'f': case 'F': (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch?.(()=>{}); break;
-      case 'c': case 'C': clockOn=!clockOn; clockEl.classList.toggle('show',clockOn); break;
+      case ' ': togglePause(); break;
+      case 'f': case 'F': toggleFull(); break;
+      case 'c': case 'C': toggleClock(); break;
+      case 'l': case 'L': toggleLabel(); break;
+      default: handled=false;
     }
-  });
+    if(handled){ e.preventDefault(); e.stopPropagation(); }  // 予約キーは作品側に渡さない（→←Space等の二重動作を防ぐ）
+  }
+  function relayKeys(frame){
+    try{ frame.contentDocument.addEventListener('keydown', onKey, true); }catch(e){}
+  }
+  document.addEventListener('keydown', onKey, true);
 
   // ── auto-hide cursor ──
   let cursorTimer=null;
