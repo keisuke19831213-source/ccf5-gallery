@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF5 — 展示モード（投影用）</title>
+<style>
+  :root{--gold:#d9b26a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden;cursor:none}
+  body{font-family:"Hiragino Mincho ProN","YuMincho",serif;color:#f2efe6}
+  .stage{position:fixed;inset:0;background:#000}
+  .layer{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity var(--fade,2400ms) ease-in-out;border:0;display:block}
+  .layer.on{opacity:1}
+
+  /* gallery wall-label (fades in on each change, then out) */
+  .label{position:fixed;left:44px;bottom:40px;z-index:20;opacity:0;transform:translateY(8px);
+    transition:opacity 1.1s ease,transform 1.1s ease;pointer-events:none;text-shadow:0 2px 20px rgba(0,0,0,.9)}
+  .label.show{opacity:1;transform:translateY(0)}
+  .label .no{font-family:"Helvetica Neue",sans-serif;font-size:12px;letter-spacing:.34em;color:var(--gold)}
+  .label .ttl{font-size:30px;font-weight:600;letter-spacing:.05em;margin-top:8px}
+  .label .en{font-family:"Helvetica Neue",sans-serif;font-size:12px;letter-spacing:.28em;color:#b7b1c2;margin-top:6px;text-transform:uppercase}
+
+  /* opening / start overlay */
+  .start{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(1000px 700px at 50% 40%,rgba(217,178,106,.08),transparent 60%),#000;cursor:pointer;transition:opacity 1.6s ease}
+  .start.gone{opacity:0;pointer-events:none}
+  .start .k{font-family:"Helvetica Neue",sans-serif;letter-spacing:.5em;font-size:12px;color:var(--gold);text-indent:.5em;margin-bottom:26px}
+  .start h1{font-size:clamp(34px,7vw,64px);font-weight:600;letter-spacing:.08em}
+  .start .en{font-family:"Helvetica Neue",sans-serif;font-weight:300;letter-spacing:.36em;font-size:15px;color:#9a95a8;margin-top:20px;text-indent:.36em}
+  .start .go{margin-top:52px;font-family:"Helvetica Neue",sans-serif;font-size:13px;letter-spacing:.22em;color:#e9e4d6;
+    border:1px solid rgba(217,178,106,.5);border-radius:99px;padding:14px 30px;animation:breathe 3.2s ease-in-out infinite}
+  .start .hint{position:fixed;bottom:34px;font-family:"Helvetica Neue",sans-serif;font-size:11px;letter-spacing:.12em;color:#5a5568}
+  @keyframes breathe{0%,100%{opacity:.7}50%{opacity:1;border-color:var(--gold)}}
+
+  /* dim clock + paused chip (operator aids, hidden unless toggled/paused) */
+  .clock{position:fixed;top:26px;right:30px;z-index:20;font-family:"Helvetica Neue",sans-serif;font-size:13px;letter-spacing:.14em;
+    color:rgba(255,255,255,.32);opacity:0;transition:opacity .6s}
+  .clock.show{opacity:1}
+  .paused{position:fixed;top:26px;left:30px;z-index:20;font-family:"Helvetica Neue",sans-serif;font-size:11px;letter-spacing:.22em;
+    color:var(--gold);opacity:0;transition:opacity .5s}
+  .paused.show{opacity:1}
+  .cursor-on,html.cursor-on,html.cursor-on body{cursor:default}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <iframe class="layer" id="lA" allow="autoplay; microphone" scrolling="no"></iframe>
+    <iframe class="layer" id="lB" allow="autoplay; microphone" scrolling="no"></iframe>
+  </div>
+
+  <div class="label" id="label">
+    <div class="no" id="lno"></div>
+    <div class="ttl" id="ltt"></div>
+    <div class="en" id="len"></div>
+  </div>
+
+  <div class="clock" id="clock">--:--</div>
+  <div class="paused" id="paused">❙❙ PAUSED</div>
+
+  <div class="start" id="start">
+    <div class="k">REGEN DAY · 2026.07.13</div>
+    <h1>幾何の作品集</h1>
+    <div class="en">SIX STUDIES IN GEOMETRY</div>
+    <div class="go">▶ クリックで開演（全画面）</div>
+    <div class="hint">→ 次へ ／ ← 戻る ／ Space 一時停止 ／ F 全画面 ／ C 時計 ／ Esc 終了</div>
+  </div>
+
+<script>
+  // ══════════ 設定（ここだけ変えればOK） ══════════
+  const DWELL_SEC = 240;   // 1作品の表示秒数（240=4分。6作品で約24分→9:30開始なら10:00前に約1.5周）
+                           //   ※「30分ちょうど1周・10:00に量子曼荼羅で締め」にしたいなら 300 に変える
+  const FADE_MS   = 2400;  // クロスフェード時間
+  // 上映順（受付〜開演の弧：無から→無限→生命→共鳴→多次元→曼荼羅=満ちる）
+  const ORDER = [
+    {dir:"art06", no:"CCF5 · 06", ttl:"幾何の創世",     en:"Genesis of Form"},
+    {dir:"art03", no:"CCF5 · 03", ttl:"無限幾何回廊",   en:"Infinite Geometry"},
+    {dir:"art02", no:"CCF5 · 02", ttl:"生命と幾何学",   en:"Morphogenesis"},
+    {dir:"art01", no:"CCF5 · 01", ttl:"共鳴譜",         en:"Cymatic Resonance"},
+    {dir:"art04", no:"CCF5 · 04", ttl:"HOPF LOOM",       en:"S³ の織物"},
+    {dir:"art05", no:"CCF5 · 05", ttl:"量子曼荼羅",     en:"Quantum Mandala"},
+  ];
+  // ════════════════════════════════════════════════
+
+  document.documentElement.style.setProperty('--fade', FADE_MS+'ms');
+  const A=document.getElementById('lA'), B=document.getElementById('lB');
+  const label=document.getElementById('label'), lno=document.getElementById('lno'), ltt=document.getElementById('ltt'), len=document.getElementById('len');
+  let cur=0, front=A, back=B, timer=null, labelTimer=null, paused=false, started=false;
+
+  function base(dir){ return dir+'/index.html'; }
+
+  function show(i){
+    cur=(i+ORDER.length)%ORDER.length;
+    const w=ORDER[cur];
+    back.src=base(w.dir);
+    back.onload=()=>{
+      front.classList.remove('on'); back.classList.add('on');
+      const t=front; front=back; back=t;         // swap
+      // unload the now-hidden layer after fade (free the WebGL context)
+      setTimeout(()=>{ if(!paused||true){ back.src='about:blank'; } }, FADE_MS+200);
+    };
+    // wall label
+    lno.textContent=w.no; ltt.textContent=w.ttl; len.textContent=w.en;
+    label.classList.add('show');
+    clearTimeout(labelTimer);
+    labelTimer=setTimeout(()=>label.classList.remove('show'), 7000);
+  }
+
+  function schedule(){ clearTimeout(timer); if(!paused) timer=setTimeout(()=>{ next(); }, DWELL_SEC*1000); }
+  function next(){ show(cur+1); schedule(); }
+  function prev(){ show(cur-1); schedule(); }
+
+  // ── clock ──
+  const clockEl=document.getElementById('clock'); let clockOn=false;
+  setInterval(()=>{ const d=new Date(); clockEl.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); },1000);
+
+  // ── start / fullscreen ──
+  const startEl=document.getElementById('start');
+  function begin(){
+    if(started) return; started=true;
+    startEl.classList.add('gone');
+    const el=document.documentElement;
+    if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+    show(0); schedule();
+  }
+  startEl.addEventListener('click', begin);
+
+  // ── controls ──
+  const pausedEl=document.getElementById('paused');
+  function togglePause(){ paused=!paused; pausedEl.classList.toggle('show',paused); if(paused){clearTimeout(timer);} else {schedule();} }
+  document.addEventListener('keydown', e=>{
+    if(!started){ if(e.key==='Enter'||e.key===' ') begin(); return; }
+    switch(e.key){
+      case 'ArrowRight': next(); break;
+      case 'ArrowLeft': prev(); break;
+      case ' ': e.preventDefault(); togglePause(); break;
+      case 'f': case 'F': (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch?.(()=>{}); break;
+      case 'c': case 'C': clockOn=!clockOn; clockEl.classList.toggle('show',clockOn); break;
+    }
+  });
+
+  // ── auto-hide cursor ──
+  let cursorTimer=null;
+  window.addEventListener('mousemove', ()=>{
+    document.documentElement.classList.add('cursor-on');
+    clearTimeout(cursorTimer);
+    cursorTimer=setTimeout(()=>document.documentElement.classList.remove('cursor-on'), 2500);
+  });
+  window.addEventListener('contextmenu', e=>e.preventDefault());
+</script>
+</body>
+</html>
