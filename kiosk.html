@@ -68,8 +68,9 @@
 
 <script>
   // ══════════ 設定（ここだけ変えればOK） ══════════
-  const DWELL_SEC = 240;   // 1作品の表示秒数（240=4分。6作品で約24分→9:30開始なら10:00前に約1.5周）
-                           //   ※「30分ちょうど1周・10:00に量子曼荼羅で締め」にしたいなら 300 に変える
+  const DWELL_SEC = 90;    // 1作品の表示秒数（90=1分半。6作品で9分→30分で約3周。飽きない巡回）
+                           //   ※ゆっくりにしたいなら120〜150、速くしたいなら60あたりで調整
+  const SHOW_LABEL = true; // 左下の作品ラベル（CCF5・NN / 和名 / 英名）を出す。完全に何も出したくないなら false
   const FADE_MS   = 2400;  // クロスフェード時間
   // 上映順（受付〜開演の弧：無から→無限→生命→共鳴→多次元→曼荼羅=満ちる）
   const ORDER = [
@@ -85,25 +86,49 @@
   document.documentElement.style.setProperty('--fade', FADE_MS+'ms');
   const A=document.getElementById('lA'), B=document.getElementById('lB');
   const label=document.getElementById('label'), lno=document.getElementById('lno'), ltt=document.getElementById('ltt'), len=document.getElementById('len');
-  let cur=0, front=A, back=B, timer=null, labelTimer=null, paused=false, started=false;
+  let cur=0, activeLayer=null, timer=null, labelTimer=null, paused=false, started=false;
 
+  // 各作品が画面に出す固有UI（タイトル・操作説明など）を隠すCSS。
+  // 同一オリジンなのでiframe内に注入する。※作品ごとにセレクタが違う（一括指定はcanvas誤爆の危険）
+  const HIDE={
+    art01:"#ui,#readout,#freq,#mode,#hint",
+    art02:".fade",
+    art03:".ui",
+    art04:"#hud,.jp,.keys",
+    art05:"#hud,.block,.sub",
+    art06:"#hud,.corner,#dots"
+  };
   function base(dir){ return dir+'/index.html'; }
+  function hideHUD(frame,dir){
+    try{
+      const doc=frame.contentDocument, sel=HIDE[dir];
+      if(doc && sel){ const st=doc.createElement('style'); st.textContent=sel+'{display:none!important;}'; (doc.head||doc.documentElement).appendChild(st); }
+    }catch(e){}
+  }
 
   function show(i){
     cur=(i+ORDER.length)%ORDER.length;
     const w=ORDER[cur];
-    back.src=base(w.dir);
-    back.onload=()=>{
-      front.classList.remove('on'); back.classList.add('on');
-      const t=front; front=back; back=t;         // swap
-      // unload the now-hidden layer after fade (free the WebGL context)
-      setTimeout(()=>{ if(!paused||true){ back.src='about:blank'; } }, FADE_MS+200);
+    const incoming=(activeLayer===A)?B:A;
+    const outgoing=activeLayer;
+    incoming.onload=function(){
+      incoming.onload=null;            // 一度きり（about:blankでの再発火を防ぐ＝真っ暗バグの原因）
+      hideHUD(incoming,w.dir);
+      incoming.classList.add('on');
+      if(outgoing) outgoing.classList.remove('on');
+      activeLayer=incoming;
+      if(outgoing){                     // フェード後に前のレイヤーを解放（表示中は絶対に消さないよう保護）
+        setTimeout(()=>{ if(outgoing!==activeLayer){ outgoing.onload=null; outgoing.src='about:blank'; } }, FADE_MS+400);
+      }
     };
+    incoming.src=base(w.dir);
     // wall label
-    lno.textContent=w.no; ltt.textContent=w.ttl; len.textContent=w.en;
-    label.classList.add('show');
-    clearTimeout(labelTimer);
-    labelTimer=setTimeout(()=>label.classList.remove('show'), 7000);
+    if(SHOW_LABEL){
+      lno.textContent=w.no; ltt.textContent=w.ttl; len.textContent=w.en;
+      label.classList.add('show');
+      clearTimeout(labelTimer);
+      labelTimer=setTimeout(()=>label.classList.remove('show'), 7000);
+    }
   }
 
   function schedule(){ clearTimeout(timer); if(!paused) timer=setTimeout(()=>{ next(); }, DWELL_SEC*1000); }
