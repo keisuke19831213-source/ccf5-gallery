@@ -39,9 +39,11 @@
     background:var(--bg2);aspect-ratio:4/3;display:flex;flex-direction:column;justify-content:flex-end;
     transition:transform .4s cubic-bezier(.2,.7,.2,1),border-color .4s,box-shadow .4s}
   .piece:hover{transform:translateY(-6px);border-color:rgba(217,178,106,.5);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(217,178,106,.15)}
-  .piece .canvas{position:absolute;inset:0;overflow:hidden}
-  .piece .canvas b{position:absolute;border-radius:50%;filter:blur(2px);opacity:.9;animation:drift 14s ease-in-out infinite}
-  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(14px,-12px) scale(1.15)}}
+  .piece .canvas{position:absolute;inset:0;overflow:hidden;background:#05050a}
+  .piece .thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.94;
+    transition:transform .7s cubic-bezier(.2,.7,.2,1),opacity .4s}
+  .piece:hover .thumb{transform:scale(1.06);opacity:1}
+  .piece .canvas::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%,transparent 40%,rgba(5,5,10,.35));pointer-events:none}
   .piece .num{position:absolute;top:16px;left:18px;font-family:"Helvetica Neue",sans-serif;font-size:11px;letter-spacing:.24em;color:rgba(255,255,255,.55);z-index:3}
   .piece .cap{position:relative;z-index:3;padding:20px 20px 22px;background:linear-gradient(0deg,rgba(7,7,12,.94) 12%,rgba(7,7,12,.55) 60%,transparent)}
   .piece .ttl{font-size:19px;font-weight:600;letter-spacing:.03em}
@@ -101,14 +103,8 @@
   const grid=document.getElementById('grid');
   WORKS.forEach((w,i)=>{
     const a=document.createElement('a');a.className='piece';a.href=w.dir+'/';
-    // decorative orbs tinted per work
-    let orbs='';
-    for(let k=0;k<5;k++){
-      const s=40+Math.random()*90, x=Math.random()*100, y=Math.random()*70;
-      orbs+=`<b style="width:${s}px;height:${s}px;left:${x}%;top:${y}%;background:${w.col};opacity:${.12+Math.random()*.22};animation-delay:${-Math.random()*14}s"></b>`;
-    }
     a.innerHTML=`
-      <div class="canvas" style="background:radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,.04), transparent 55%)">${orbs}</div>
+      <div class="canvas"><img class="thumb" src="thumbs/${w.dir}.jpg" loading="lazy" alt="${w.ttl} ${w.en}"></div>
       <div class="num">CCF5 · ${w.n}</div>
       <div class="open">OPEN ↗</div>
       <div class="cap">
