@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF5 — 幾何の作品集</title>
-<meta name="description" content="幾何学をめぐる7つのリアルタイム生成アート。共鳴・生命・無限・多次元・量子・創世・暦。">
+<meta name="description" content="幾何学をめぐる6つのリアルタイム生成アート。共鳴・無限・多次元・量子・創世・暦。">
 <meta property="og:title" content="CCF5 — 幾何の作品集">
-<meta property="og:description" content="幾何学をめぐる7つのリアルタイム生成アート（WebGL2）">
+<meta property="og:description" content="幾何学をめぐる6つのリアルタイム生成アート（WebGL2）">
 <style>
   :root{
     --bg:#07070c; --bg2:#0c0c14; --ink:#f2efe6; --sub:#9a95a8; --dim:#615c72;
@@ -68,8 +68,8 @@
 
   <div class="hero">
     <div class="kicker">CCF5 SERIES · 2026</div>
-    <h1>幾何の作品集<span class="en">SEVEN STUDIES IN GEOMETRY</span></h1>
-    <p class="lead">音は形になり、方程式は光になる。<br>幾何学をめぐる7つのリアルタイム生成アート。<br>各作品はブラウザの中で毎秒、いま計算されて生まれています。</p>
+    <h1>幾何の作品集<span class="en">SIX STUDIES IN GEOMETRY</span></h1>
+    <p class="lead">音は形になり、方程式は光になる。<br>幾何学をめぐる6つのリアルタイム生成アート。<br>各作品はブラウザの中で毎秒、いま計算されて生まれています。</p>
     <div class="rule"></div>
   </div>
 
@@ -78,7 +78,7 @@
   <div class="foot">
     <div class="note">
       <b>鑑賞のしかた</b>　作品をクリックすると全画面で開きます（『二十四節気の円環』のみ別タブ）。ドラッグ・ホイール・キーで反応します（各画面に操作ヒント表示）。<br>
-      WebGL2のリアルタイム生成。01〜06は単一HTML・外部依存なし。
+      WebGL2のリアルタイム生成。01〜05は単一HTML・外部依存なし。
     </div>
     <div class="sig">MATSUISHI KEISUKE<br><span style="color:var(--dim)">REGEN DAY · 2026.07.13</span></div>
   </div>
@@ -89,17 +89,15 @@
   const WORKS=[
     {n:"01",dir:"art01",ttl:"共鳴譜",en:"Cymatic Resonance",col:"var(--a1)",
      dsc:"52万粒の砂が音を「見る」。クラドニ図形の物理シミュレーション。マイクを開けば、あなたの声が幾何学として結晶する。"},
-    {n:"02",dir:"art02",ttl:"生命と幾何学",en:"Morphogenesis",col:"var(--a2)",
-     dsc:"黄金角137.5°の種子格子に、チューリングの反応拡散系が芽吹く。幾何学は生命を蒔き、生命は幾何学を喰らう。"},
-    {n:"03",dir:"art03",ttl:"無限幾何回廊",en:"Infinite Geometry",col:"var(--a3)",
+    {n:"02",dir:"art03",ttl:"無限幾何回廊",en:"Infinite Geometry",col:"var(--a3)",
      dsc:"円のなかに円、そのなかにまた円。アポロニウスのガスケットを永遠に潜行する。原子から銀河まで同じ幾何学。"},
-    {n:"04",dir:"art04",ttl:"HOPF LOOM",en:"S³ の織物",col:"var(--a4)",
+    {n:"03",dir:"art04",ttl:"HOPF LOOM",en:"S³ の織物",col:"var(--a4)",
      dsc:"四次元球面S³を無数の円が編み上げるHopfファイブレーション。見えないはずの多次元の織物を、いま目の前で織る。"},
-    {n:"05",dir:"art05",ttl:"量子曼荼羅",en:"Quantum Mandala",col:"var(--a5)",
+    {n:"04",dir:"art05",ttl:"量子曼荼羅",en:"Quantum Mandala",col:"var(--a5)",
      dsc:"絵ではなく方程式そのもの。シュレーディンガー方程式をGPUで実時間で解いた波動関数|ψ|²。聖なる幾何学が定常波紋を編む。"},
-    {n:"06",dir:"art06",ttl:"幾何の創世",en:"Genesis of Form",col:"var(--a6)",
+    {n:"05",dir:"art06",ttl:"幾何の創世",en:"Genesis of Form",col:"var(--a6)",
      dsc:"無から最初の円が引かれ、フラワー・オブ・ライフを経てメタトロン・キューブが立ち上がり、再び無へ還る。68秒の創世神話。"},
-    {n:"07",dir:"ring",href:"https://nijushisekki-ring.vercel.app",ttl:"二十四節気の円環",en:"The Ring of Twenty-Four Seasons",col:"var(--a1)",
+    {n:"06",dir:"ring",href:"https://nijushisekki-ring.vercel.app",ttl:"二十四節気の円環",en:"The Ring of Twenty-Four Seasons",col:"var(--a1)",
      dsc:"太陽黄経360°を24等分し、一年を円環として巡る暦の幾何学。触れると季節の流れが撹拌される、生きたアルマナック。（別タブで開きます）"},
   ];
   const grid=document.getElementById('grid');
